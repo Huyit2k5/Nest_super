@@ -19,11 +19,11 @@ class configShema {
     @IsString()
     ACCESS_TOKEN_SECRET: string
     @IsString()
-    ACCESS_TOKEN_EXPIRY: string
+    ACCESS_TOKEN_EXPIRES_IN: string
     @IsString()
     REFRESH_TOKEN_SECRET: string
     @IsString()
-    REFRESH_TOKEN_EXPIRY: string
+    REFRESH_TOKEN_EXPIRES_IN: string
 }
 
 const configServer = plainToInstance(configShema, process.env, {
