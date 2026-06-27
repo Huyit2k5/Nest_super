@@ -2,8 +2,9 @@ import { ConflictException, Injectable, UnauthorizedException, UnprocessableEnti
 import { Prisma } from 'src/generated/prisma/client';
 import { HashingService } from 'src/shared/services/hashing.service';
 import { PrismaService } from 'src/shared/services/prisma.service';
-import { LoginBodyDTO, RegisterBodyDTO } from './auth.dto';
+import { LoginBodyDTO, RefreshTokenBodyDTO, RegisterBodyDTO } from './auth.dto';
 import { TokenService } from 'src/shared/services/token.service';
+import { isNotFoundPrismaError, isUniqueConstraintPrismaError } from 'src/shared/helpers';
 
 @Injectable()
 export class AuthService {
@@ -21,7 +22,7 @@ export class AuthService {
             })
             return user
         } catch (error) {
-            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+            if (isUniqueConstraintPrismaError(error)) {
                 throw new ConflictException("Email already exists")
             }
             throw error
@@ -68,6 +69,31 @@ export class AuthService {
         return {
             accessToken,
             refreshToken
+        }
+    }
+
+    async refreshToken(refreshToken: string) {
+        try {
+            const {userId} = await this.tokenService.verifyRefreshToken(refreshToken)
+            await this.prismaService.refreshToken.findUniqueOrThrow({
+                where: {
+                    token: refreshToken
+                }
+            })
+            // xoa refresh-token cu
+            await this.prismaService.refreshToken.delete({
+                where: {
+                    token: refreshToken
+                }
+            })
+            // tao moi access va refresh
+            return await this.generateTokens({userId})
+        } catch (error) {   
+            // Truong hop da refresh token roi, thong bao cho user biet refresh token cuar ho da bi danh cap
+            if (isNotFoundPrismaError(error)) {
+                throw new UnauthorizedException('Refresh token has been revoked')
+            }
+            throw new UnauthorizedException('Account is not exist')
         }
     }
 }

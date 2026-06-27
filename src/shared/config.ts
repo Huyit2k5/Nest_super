@@ -17,6 +17,8 @@ class configShema {
     @IsString()
     DATABASE_URL: string
     @IsString()
+    SECRET_API_KEY: string
+    @IsString()
     ACCESS_TOKEN_SECRET: string
     @IsString()
     ACCESS_TOKEN_EXPIRES_IN: string
@@ -24,6 +26,7 @@ class configShema {
     REFRESH_TOKEN_SECRET: string
     @IsString()
     REFRESH_TOKEN_EXPIRES_IN: string
+
 }
 
 const configServer = plainToInstance(configShema, process.env, {
